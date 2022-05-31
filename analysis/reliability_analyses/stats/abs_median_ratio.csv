@@ -1,0 +1,9 @@
+ori,task,median_abs_ratio,iqr,q1,q3
+horizontal,temporal,1.27,0.17,1.13,1.3
+horizontal,spatial,1.24,0.28,1.05,1.33
+vertical,temporal,1.36,0.53,1.1,1.63
+vertical,spatial,1.1,0.13,1.04,1.17
+minus45,temporal,1.16,0.3,1.09,1.39
+minus45,spatial,1.18,0.17,1.12,1.29
+plus45,temporal,1.21,0.13,1.13,1.26
+plus45,spatial,1.16,0.23,1.06,1.29

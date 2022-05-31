@@ -1,5 +1,64 @@
+# WEB EXPERIMENT #
+
 The web experiment (stimuli, procedure) was built with PsychoPy and run through Pavlovia.
 
 here are the urls for the temporal and spatial tasks (can be made live upon request)
         temporal: https://run.pavlovia.org/RichardL/temporal2afc_homevslab
         spatial: hhttps://run.pavlovia.org/RichardL/spatial2afc_homevslab
+
+
+# STIMULUS IMAGES #
+
+Due to the large size of images uploaded to Pavlovia, they cannot be pushed to a repository.
+All stimuli were generated in PsychoPy and the stimulus array was saved as a .png image
+
+Appropriate images are to be uploaded within the resources folders with the following names:
+
+PCN_horizontal_0.00deg.png
+PCN_horizontal_0.36deg.png
+PCN_horizontal_0.71deg.png
+PCN_horizontal_1.07deg.png
+PCN_horizontal_1.43deg.png
+PCN_horizontal_1.79deg.png
+PCN_horizontal_2.14deg.png
+PCN_horizontal_2.50deg.png
+PCN_horizontal_2.86deg.png
+PCN_horizontal_3.57deg.png
+PCN_horizontal_4.29deg.png
+PCN_horizontal_5.00deg.png
+PCN_minus45_0.00deg.png
+PCN_minus45_1.79deg.png
+PCN_minus45_3.57deg.png
+PCN_minus45_5.36deg.png
+PCN_minus45_7.14deg.png
+PCN_minus45_8.93deg.png
+PCN_minus45_10.71deg.png
+PCN_minus45_12.50deg.png
+PCN_minus45_14.29deg.png
+PCN_minus45_17.86deg.png
+PCN_minus45_21.43deg.png
+PCN_minus45_25.00deg.png
+PCN_plus45_0.00deg.png
+PCN_plus45_1.79deg.png
+PCN_plus45_3.57deg.png
+PCN_plus45_5.36deg.png
+PCN_plus45_7.14deg.png
+PCN_plus45_8.93deg.png
+PCN_plus45_10.71deg.png
+PCN_plus45_12.50deg.png
+PCN_plus45_14.29deg.png
+PCN_plus45_17.86deg.png
+PCN_plus45_21.43deg.png
+PCN_plus45_25.00deg.png
+PCN_vertical_0.00deg.png
+PCN_vertical_0.36deg.png
+PCN_vertical_0.71deg.png
+PCN_vertical_1.07deg.png
+PCN_vertical_1.43deg.png
+PCN_vertical_1.79deg.png
+PCN_vertical_2.14deg.png
+PCN_vertical_2.50deg.png
+PCN_vertical_2.86deg.png
+PCN_vertical_3.57deg.png
+PCN_vertical_4.29deg.png
+PCN_vertical_5.00deg.png

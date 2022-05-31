@@ -1,0 +1,17 @@
+# REQUIREMENTS #
+
+Install requirements.txt to ensure experiment / analysis code works correctly (preferably use a virtual environment)
+
+pip install -r requirements.txt
+
+
+# EXPERIMENT #
+
+Contains code for the web and lab versions of the experiment, see readme files for further information
+
+
+# ANALYSIS #
+
+Contains raw_data
+Analysis code for calculating thresholds and summary statistics
+Analysis code for reliability measures (icc, yyplot, bland-altman)

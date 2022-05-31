@@ -44,24 +44,22 @@ def fit_logistic(x, y, maxfev=4000, p0=None, bounds=(-np.inf, np.inf)):
 
 def plot_psychometric(x_axis, y_axis, x_fit_axis, y_fit_axis, threshold_value, title='', close_all=True,
                       to_save=False, save_dir=None, save_name='', percent=False, legend=True):
-    threshold_idx = np.argmin(abs(x_fit_axis - threshold_value))
-    if close_all:
+
+    if close_all:  # to close previous plots
         pylab.close('all')
-    else:
-        pass
-    if percent is True:  # convert to percentage units
-        y_axis *= 100
-        y_fit_axis *= 100
-        y_label = 'Percent Correct (%)'
-        y_lim = (0, 102)
-    else:
-        y_label = 'Proportion Correct'
-        y_lim = (0, 1.02)
+
+    threshold_idx = np.argmin(abs(x_fit_axis - threshold_value))
+
+    # convert to percentage units
+    y_axis *= 100
+    y_fit_axis *= 100
+    y_label = 'Percent Correct (%)'
+    y_lim = (0, 102)
+
     fig = pylab.figure(figsize=(4, 3))
     pylab.plot(x_axis, y_axis, 'o', label='data')
     pylab.plot(x_fit_axis, y_fit_axis, label='fit')
-    # pylab.ylim(0 - .01, 1.01)
-    # pylab.xlim(x_axis.min() - 0.01, x_axis.max() + 0.01)
+
     pylab.plot([threshold_value, threshold_value], [0, y_fit_axis[threshold_idx]], 'k--', alpha=0.3)
     pylab.plot([0, threshold_value], [y_fit_axis[threshold_idx], y_fit_axis[threshold_idx]], 'k--', alpha=0.3)
     # adjust plot
@@ -69,12 +67,10 @@ def plot_psychometric(x_axis, y_axis, x_fit_axis, y_fit_axis, threshold_value, t
     ax.set(ylim=y_lim, xlim=(x_axis.min(), x_axis.max() + 0.02))
     ax.set_xlabel("Orientation Difference ($^\circ$)", fontweight='bold', fontsize=12, fontfamily='sans-serif')
     ax.set_ylabel(y_label, fontweight='bold', fontsize=12, fontfamily='sans-serif')
-    # ax.set_xticklabels(labels=ax.get_xticklabels(), fontsize=10)
-    # ax.set_yticklabels(labels=ax.get_yticklabels(), fontsize=10)
+
+    title = ''.join(title.split('\t'))
     pylab.title(title, pad=20, fontsize=13)
     if legend is True:
         pylab.legend(loc='best')
-    fig.set_dpi(150)
+    fig.set_dpi(100)
     fig.tight_layout()
-    if to_save is True or save_dir is not None:
-        pylab.savefig(os.path.join(save_dir, f"{save_name}.png"))

@@ -1,118 +1,14 @@
-import time
 import os
 import numpy as np
 import pandas as pd
-from scipy.optimize import curve_fit
-import pylab
 import seaborn as sns
 import matplotlib.pyplot as plt
-from matplotlib.collections import PolyCollection
-import matplotlib as mpl
 import pingouin as pg
 from scipy import stats as st
-import multiprocessing as mlp
-import random
-from collections import namedtuple
-from Code.mytools.misc import add_cardinal_and_oblique
-from Code.mytools.dict_tools import append_dicty
-from Code.mytools.mocs import plot_psychometric, fit_logistic
-from Code.mytools.dframe_tools import to_csv_pkl, change_dframe_colnames, change_dframe_labels, index_dframe
-from Code.mytools.my_seaborn import load_seaborn_prefs, barplot_err
-
-
-def resample(dataset, n_samples=1000):
-    dataset = np.asarray(dataset)
-    # pull out resampled data for n_samples
-    resampled = [None] * n_samples
-    for i in range(n_samples):
-        resampled[i] = random.choices(dataset, k=len(dataset))
-    return np.asarray(resampled)
-
-
-def bs_stats(vals, name='output'):
-    Output = namedtuple(name, ['stdev', 'sem', 'ci', 'mean'],
-                        defaults=[np.var(vals, ddof=1), np.std(vals, ddof=1),
-                                  np.percentile(vals, [2.5, 97.5]), np.mean(vals)])
-    return Output()
-
-
-def get_web_rawdata(datadir):
-    """ WEB RUNS """
-    original_dir = os.getcwd()
-    os.chdir(datadir)
-
-    p = 'surname'
-    ori = 'target orientation'
-    exp = 'expName'
-    level = 'ori offset'
-    measure = 'proportion correct'
-
-    # init empty DF with col names, then concatenate with list of dfs from each .csv file (pd.concat)
-    column_names = [p, exp, ori, level, measure]
-    web_data = []
-    for filename in os.listdir():
-        if filename.endswith('.csv'):
-            file = pd.read_csv(filename)
-            file = file[(file['current count'] == 10)]
-            if file.empty:  # if run did not reach 10 reps on each ori offset then skip
-                continue
-            # P COMPLETED A DIFFERENT RANGE SO THIS CANNOT BE INCLUDED
-            if file['surname'].unique()[0].lower() == 'leadbeater':
-                if file['ori offset'].max() == 25.0:
-                    continue
-            file = file[column_names]  # df w/ specific cols
-            naughty_list = ['test', 'testrun', 'ignore_run']  # ignore data from these names
-
-            if any(name.lower() == file['surname'].unique()[0].lower() for name in naughty_list):
-                pass  # ignore naughty list names
-            else:
-                web_data.append(file)
-
-    web_data = pd.concat(web_data)
-    web_data[p] = web_data[p].str.capitalize()
-    web_data[p] = web_data[p].str.strip()
-    web_data = web_data.sort_values([p, exp, ori, level])
-    web_data[level] = web_data[level].astype('str')
-    web_data = add_cardinal_and_oblique(web_data, ori)
-    web_data['enviro'] = ['web'] * len(web_data)
-    os.chdir(original_dir)
-    return web_data
-
-
-def get_lab_rawdata(datadir):
-    """ LAB RUNS """
-    original_dir = os.getcwd()
-    os.chdir(datadir)
-    p = 'participant'
-    ori = 'orientation'
-    exp = 'task'
-    level = 'offset'
-    measure = 'proportion_correct'
-
-    lab_data = []
-    for p_dir in os.listdir():  # loop through dir for each p
-        os.chdir(os.path.join(datadir, p_dir))
-        dir_results = []
-        for idx, filename in enumerate(os.listdir()):
-            if filename.endswith('.psydat'):
-                file = pd.read_pickle(filename)
-                try:
-                    file_results = file.extraInfo['analysis']['results']  # incomplete run
-                except KeyError:
-                    continue  # incomplete run
-                n_rows = len(file_results)
-                file_results[p] = [file.extraInfo[p]] * n_rows
-                file_results[ori] = [file.extraInfo[ori]] * n_rows
-                file_results[exp] = [file.extraInfo[exp]] * n_rows
-                file_results = file_results[[p, exp, ori, level, measure]]
-                dir_results.append(file_results)
-        dir_results = pd.concat(dir_results)
-        lab_data.append(dir_results)
-    lab_data = pd.concat(lab_data)
-    lab_data = add_cardinal_and_oblique(lab_data, ori)
-    lab_data['enviro'] = ['lab'] * len(lab_data)
-    os.chdir(original_dir)
-    return lab_data
+from mytools.misc import add_cardinal_and_oblique
+from mytools.dict_tools import append_dicty
+from mytools.dframe_tools import to_csv_pkl, change_dframe_colnames, change_dframe_labels, index_dframe
+from mytools.my_seaborn import load_seaborn_prefs, barplot_err
 
 
 def rand_jitter(arr, multiplier=1.04):
@@ -337,15 +233,6 @@ def bland_altman(dframe, title, labels, loglabels, ratiolabel, hue=None,
     return {'mean_diff': ratio_l_meandiff, 'loa': ratio_l_agree}
 
 
-def ba_stats(diffvals, create_summary=True):
-    mdiff = np.mean(diffvals)
-    n = len(diffvals)
-    aglims = [mdiff + (1.96 * np.std(diffvals, ddof=1)) * i for i in [-1, 1]]
-    n_fit = len([i for i in diffvals if aglims[0] < i < aglims[1]])  # how many fit within laglims
-    nshit = len(diffvals) - n_fit
-    return mdiff, aglims, nshit
-
-
 def check_normal_dist(data, title=None, nbins=13, show_hist=False):
     data = np.asarray(data)
     if show_hist:
@@ -378,90 +265,68 @@ def get_median_absolute_ratio(yy_, logdiff_col, title=''):
     return abs_median, np.round(iqr, 2)
 
 
+# init paths #
 og_dir = os.getcwd()
-repo_dir = '/Code'
-# repo_dir = 'C:/Users/rjlea/Documents/Code_Repositories/Code'
-lab_dir = os.path.join(og_dir, 'data/lab')
-web_dir = os.path.join(og_dir, 'data/web')
-raw_dir = os.path.join(og_dir, 'raw')
-sum_dir = os.path.join(og_dir, 'summary')
-sts_dir = os.path.join(og_dir, 'stats')
-rel_dir = os.path.join(og_dir, 'reliability analysis')
-for i_dir in [lab_dir, web_dir, raw_dir, sum_dir, sts_dir, rel_dir]:
+data_dir = os.path.join(og_dir, 'data')
+raw_dir = os.path.join(data_dir, 'raw')
+sum_dir = os.path.join(data_dir, 'summary')
+# new dirs
+rel_dir = os.path.join(og_dir, 'reliability_analyses')
+sub_dir = os.path.join(rel_dir, 'yy_data')
+gph_dir = os.path.join(rel_dir, 'graphs')
+sts_dir = os.path.join(rel_dir, 'stats')
+
+for i_dir in [sub_dir, sts_dir, gph_dir]:
     if not os.path.exists(i_dir):
         os.makedirs(i_dir)
 
-# use bootstrap data if it is available
-# summary_data = pd.read_csv(os.path.join(sum_dir, f"oriId_homevslab_bootstrap_allsummary.csv"))
-summarydata = pd.read_csv(os.path.join(sum_dir, f"oriId_homevslab_allsummary.csv"))
-
+# common keys as vars
 env = 'enviro'
 p = 'observer'
 exp = 'task'
 ori = 'ori'
 lvl = 'offset'
 dv = 'proportion_correct'
-filename = 'oriId_homevslab'
-mydpi = 150
+mydpi = 100  # plot setting
 
-""" SUMMARY DATA """
-unique = {}
-for col in summarydata.columns:
-    unique[col] = summarydata[col].unique()
+# load in summary data #
+summary_data = pd.read_csv(os.path.join(sum_dir, f"summary_data.csv"))
 
 """
 Intraclass Correlation
 """
-# only use data in icc that has 4 runs on each cond in web and lab
+# only use data in icc that has runs in web and lab
 icc_datalist = []
-for i_p in summarydata[p].unique():
-    for i_exp in summarydata[exp].unique():
-        for i_ori in summarydata[ori].unique():
-            i_data = summarydata[(summarydata[p] == i_p) &
-                                 (summarydata[exp] == i_exp) &
-                                 (summarydata[ori] == i_ori)]
+for i_p in summary_data[p].unique():
+    for i_exp in summary_data[exp].unique():
+        for i_ori in summary_data[ori].unique():
+            i_data = summary_data[(summary_data[p] == i_p) &
+                                  (summary_data[exp] == i_exp) &
+                                  (summary_data[ori] == i_ori)]
             if len(i_data[env].unique()) < 2:
                 continue  # skip if only performed web
             icc_datalist.append(i_data)
-iccdata = pd.concat([i for i in icc_datalist])
+icc_data = pd.concat([i for i in icc_datalist])
+icc, _ = run_icc(icc_data, p, env, 'threshold', cond1=exp, cond2=ori, icctype='ICC2')
+to_csv_pkl(icc, sts_dir, f"icc_analysis_{icc['Type'].to_list()[0]}", rnd=3, _pkl=False)
 
-# use ICC3:  a fixed set of k raters rate each target, no generalisation to a larger population of raters
-#            removes mean differences between raters but is sensitive to interactions
-
-# current implementation uses regular ANOVA meaning it only works with complete-case data (no missing values)
-# k rating case is equivalent to Spearman Brown adjusted reliability, reflects the means of k raters
-# analyse icc of different conditions, e.g., horizontal spatial
-eachori = ['horizontal', 'vertical', 'minus45', 'plus45']
-iccdata_eachori = pd.concat(iccdata[(iccdata[ori] == i)] for i in eachori)
-icc_eachori, _ = run_icc(iccdata_eachori, p, env, 'threshold', cond1=exp, cond2=ori, icctype='ICC2')
-to_csv_pkl(icc_eachori, sts_dir, f"icc_analysis_{icc_eachori['Type'].to_list()[0]}_eachori", rnd=2, _pkl=False)
-to_csv_pkl(icc_eachori, rel_dir, f"icc_analysis_{icc_eachori['Type'].to_list()[0]}_eachori", rnd=2, _pkl=False)
-
-
-iccdata_cvso = pd.concat(iccdata[(iccdata[ori] == i)] for i in ['cardinal', 'oblique'])
-icc_cvso, _ = run_icc(iccdata_cvso, p, env, 'threshold', cond1=exp, cond2=ori, icctype='ICC2')
-to_csv_pkl(icc_cvso, sts_dir, f"icc_analysis_{icc_cvso['Type'].to_list()[0]}_cvso", rnd=2, _pkl=False)
-to_csv_pkl(icc_cvso, rel_dir, f"icc_analysis_{icc_cvso['Type'].to_list()[0]}_cvso", rnd=2, _pkl=False)
-
-
-"""
-YY Plot
-"""
+""" YY DATA """
+# manipulate data ready for correlation / yyplot / bland-altman analyses
 # set plotting preferences
 load_seaborn_prefs(context='talk')
 
 # format dataframe to work with sns.regplot()... e.g., YY plot with regression line
-lab_summary = summarydata[(summarydata[env] == 'lab')]
-web_summary = summarydata[(summarydata[env] == 'web')]
+lab_summary = summary_data[(summary_data[env] == 'lab')]
+web_summary = summary_data[(summary_data[env] == 'web')]
 
 # put lab_threshold and web_threshold as independent columns for use in sns plots
 yy_data = {}
 cols = [p, exp, ori, 'lab', 'web', 'lab_nruns', 'web_nruns']
 for col in cols:
     yy_data[col] = []
-for i_p in unique[p]:
-    for i_exp in unique[exp]:
-        for i_ori in unique[ori]:
+for i_p in summary_data[p].unique():
+    for i_exp in summary_data[exp].unique():
+        for i_ori in summary_data[ori].unique():
             i_lab = lab_summary[(lab_summary[p] == i_p) &
                                 (lab_summary[exp] == i_exp) &
                                 (lab_summary[ori] == i_ori)]
@@ -476,7 +341,6 @@ for i_p in unique[p]:
                                    i_lab['n_runs'].to_list()[0], i_web['n_runs'].to_list()[0]])
             print('')
 yy_data = pd.DataFrame(yy_data)
-yy_data.to_csv(os.path.join(rel_dir, 'yydata.csv'))
 # add information for Bland-Altman plots
 diff_label = 'lab - web'
 mean_label = '(lab + web) / 2'
@@ -489,14 +353,10 @@ yy_data[logdiff_label] = np.log(yy_data['lab']) - np.log(yy_data['web'])
 yy_data[logmean_label] = np.mean([np.log(yy_data['lab']), np.log(yy_data['web'])], 0)
 ratio_label = 'threshold ratio (lab / web)'
 yy_data[ratio_label] = np.asarray(yy_data['lab']) / np.asarray(yy_data['web'])
-# save out to .csv and .pkl
-to_csv_pkl(yy_data, og_dir, 'yy_data', rnd=3, _pkl=False)
-
-yydata_cvso = pd.concat([yy_data[(yy_data[ori] == i)] for i in ['cardinal', 'oblique']])
-yydata_eachori = pd.concat([yy_data[(yy_data[ori] == i)] for i in ['horizontal', 'vertical', 'minus45', 'plus45']])
+to_csv_pkl(yy_data, sub_dir, 'subsample_data', rnd=3, _pkl=False)
 
 # # # ANALYSE THE ABSOLUTE MAGNITUDE RATIO VALUES # # #
-abs_log_diff = abs(yydata_eachori[logdiff_label])
+abs_log_diff = abs(yy_data[logdiff_label])
 abs_ratio_vals = np.exp(abs_log_diff)
 median_abs_ratio = np.median(abs_ratio_vals)
 percentiles = {}
@@ -513,12 +373,11 @@ for i_task in ['temporal', 'spatial']:
         percentile = np.percentile(abs_ratio_vals, 95)
         append_dicty(threshold_ratios, [i_task, i_ori, median_abs_ratio, percentile])
 threshold_ratios = pd.DataFrame(threshold_ratios)
+yylim = summary_data['threshold'].max()
 
-yylim = summarydata['threshold'].max()
-# fig, (ax1, ax2) = plt.subplots(1, 2)
-# for i_ax in fig.axes:
-#     i_ax.set_xlim([0, 25])
-# todo if you want the full range regression line you need to individually plot lmplot (no col=)
+"""
+YY Plot
+"""
 color_palette = sns.color_palette('colorblind', 4)
 color_palette = [[0.2]*3, [0.8]*3, color_palette[2], color_palette[3]]
 manual_color = [i for i in color_palette]
@@ -527,7 +386,7 @@ jitter_size = 1.03
 figdims = (4, 4)
 for itask in ['spatial', 'temporal']:
     ifig, iax = plt.subplots(figsize=figdims)
-    iplotdata = yydata_eachori[yydata_eachori[exp] == itask]
+    iplotdata = yy_data[yy_data[exp] == itask]
     iplotdata['web'] = rand_jitter(iplotdata['web'], 1.03)
     iplotdata['lab'] = rand_jitter(iplotdata['lab'], 1.02)
     corr_plot = sns.scatterplot(x='web', y='lab', data=iplotdata, hue=ori, ci=None, alpha=1,
@@ -550,73 +409,10 @@ for itask in ['spatial', 'temporal']:
     corr_plot.spines['right'].set_visible(False)
     corr_plot.get_legend().remove()
     corr_plot.figure.tight_layout()
-    corr_plot.figure.savefig(os.path.join(rel_dir, f"correlation_{itask}.png"))
+    corr_plot.figure.savefig(os.path.join(gph_dir, f"correlation_{itask}.png"))
     plt.close()
-z = 0
 # slope, intercept, r_value, p_value, std_err
-"""
-IQR
-"""
-gengraphsversion = False
-manual_color = [i for i in color_palette]
-sumdata = pd.concat(summarydata[summarydata[ori] == i] for i in ['horizontal', 'vertical', 'minus45', 'plus45'])
-if gengraphsversion:
-    measure = 'threshold'
-    ylim = (0, 27.5)
-    fig_dims = (6.7, 4)  # 4:2.2 is smallest size that give 3 yticks, 4:3 fits in word
-    fig, ax = plt.subplots(figsize=fig_dims)
-    manual_color[1] = [0.95] * 3
-    strip = sns.stripplot(data=sumdata, x=exp, y=measure, hue=ori, palette=np.asarray(manual_color) / 1.8,
-                          linewidth=1.4,
-                          dodge=True, edgecolor=[1] * 3, alpha=0.3, size=7, jitter=.3)
-    medianprops = dict(linestyle='-', linewidth=1.4, color='k', alpha=1)
-    boxprops = dict(linestyle='-', linewidth=1.8, edgecolor=[0.95] * 3, alpha=1)
-    box = sns.boxplot(data=sumdata, x=exp, y=measure, hue=ori, palette=manual_color, linewidth=2.5,
-                      showfliers=False, medianprops=medianprops, boxprops=boxprops, ax=ax)
-    ax.get_legend().remove()
-    hatches = ["", "", "\\", "/", "", "", "\\", "/"]
-    for hatch, patch in zip(hatches, ax.artists):
-        patch.set_hatch(hatch)
-    ymajor = [0, 5, 10, 15, 20, 25]
-    ax.set_yticks(ymajor, minor=False)
-    ax.set_yticklabels(ymajor, minor=False)
-    ax.set_xlabel('task', fontweight='bold')
-    ax.set_ylabel('threshold ($^\circ$)', fontweight='bold')
-    ax.set_ylim(ylim)
-    ax.figure.set_dpi(mydpi)
-    sns.despine(top=True, right=True)
-    ax.figure.tight_layout()
-else:
-    fig_dims = (6.7, 4)  # 4:2.2 is smallest size that give 3 yticks, 4:3 fits in word
-    medianprops = dict(linestyle='-', linewidth=1.4, color='k', alpha=1)
-    boxprops = dict(linestyle='-', linewidth=1.8, edgecolor=[0.95] * 3, alpha=1)
-    for itask in ['spatial', 'temporal']:
-        fig, ax = plt.subplots(figsize=fig_dims)
-        idata = yydata_eachori[(yydata_eachori[exp] == itask)]
-        iqr_plot = sns.boxplot(data=idata, x=exp, y=ratio_label, hue=ori, palette=color_palette, linewidth=2.5,
-                               showfliers=False, medianprops=medianprops, boxprops=boxprops, ax=ax)
-        sns.swarmplot(data=idata, x=exp, y=ratio_label, hue=ori, palette=np.asarray(color_palette) / 2,
-                      linewidth=1.4,
-                      dodge=True, edgecolor=[1] * 3, alpha=0.5, size=7)
-        plt.plot([-20, 20], [1, 1], color='k', linestyle=':', alpha=0.2)  # line of equality
-        iqr_plot.get_legend().remove()
-        iqr_plot.set_yscale('log')
-        ymajor = ['.5', '.75', '1', '1.5', '2']
-        yminor = [0.625, 0.875, 1.25, 1.75]
-        iqr_plot.set_yticks([float(i) for i in ymajor], minor=False)
-        iqr_plot.set_yticklabels(ymajor, minor=False)
-        iqr_plot.set_yticks(yminor, minor=True)
-        iqr_plot.set_yticklabels(['' for i in yminor], minor=True)
-        # hatch the fill
-        hatches = ["", "", "\\", "/", "", "", "\\", "/"]
-        for hatch, patch in zip(hatches, ax.artists):
-            patch.set_hatch(hatch)
-        iqr_plot.set_ylabel(ratio_label, fontweight='bold')
-        iqr_plot.figure.set_dpi(mydpi)
-        iqr_plot.figure.tight_layout()
-        iqr_plot.figure.savefig(os.path.join(rel_dir, f"boxplot_{itask}.png"))
-z=0
-plt.close()
+
 
 """
 Bland-Altman Plot
@@ -628,8 +424,8 @@ Bland-Altman Plot
 # blue lines: limits of agreement
 plt.close('all')
 # separate Bland-Altman plots for each task (linear means diffs better-follow norm_dist)
-yydata_spatial = yydata_eachori[(yydata_eachori['task'] == 'spatial')]
-yydata_temporal = yydata_eachori[(yydata_eachori['task'] == 'temporal')]
+yydata_spatial = yy_data[(yy_data['task'] == 'spatial')]
+yydata_temporal = yy_data[(yy_data['task'] == 'temporal')]
 ratiostats = {'task': [], 'geomean_ratio': [], 'loa': [], 'median_ratio': [], 'iqr': [],
               'median_abs_ratio': [], 'iqr_abs': [], 'q1': [], 'q3': []}
 for yy in [(yydata_spatial, 'spatial'), (yydata_temporal, 'temporal')]:
@@ -639,17 +435,9 @@ for yy in [(yydata_spatial, 'spatial'), (yydata_temporal, 'temporal')]:
     ba_data = bland_altman(i_data, i_title, hue=ori, labels=[diff_label, mean_label],
                            loglabels=[logdiff_label, logmean_label], ratiolabel=ratio_label,
                            save=True, show_ratio=True, show_log=True, show_linear=False, markerlist=['X'],
-                           bias_adjust=False, checkifnormal=True, save_dir=rel_dir)
+                           bias_adjust=False, checkifnormal=True, save_dir=gph_dir)
     ratiostats['geomean_ratio'].append(ba_data['mean_diff'])
     ratiostats['loa'].append(np.round(ba_data['loa'], 2))
-    # ratiostats['std'].append(np.exp(np.std(np.log(yy[ratio_label]), ddof=1)))
-    # ratiostats['sem'].append(np.exp(st.sem(np.log(yy[ratio_label]))))
-    # resampled_diffs = resample(np.log(yy[ratio_label]), 10000)
-    # bs = bs_stats(resampled_diffs, yy[exp].to_list()[0])
-    # ratiostats['bs_ci95'].append(np.exp(np.asarray(bs[2])))
-    # ratiostats['bs_mean'].append(np.exp(bs[3]))
-    # ratiostats['bs_std'].append(np.exp(bs[0]))
-    # ratiostats['bs_sem'].append(np.exp(bs[1]))
     ratiostats['median_ratio'].append(np.median(i_data[ratio_label]))
     quartiles = np.round(np.percentile(i_data[ratio_label], [25, 75]), 2)
     ratiostats['iqr'].append(quartiles[1] - quartiles[0])
@@ -659,13 +447,13 @@ for yy in [(yydata_spatial, 'spatial'), (yydata_temporal, 'temporal')]:
     ratiostats['q1'].append(abs_ratio_stats[1][0])
     ratiostats['q3'].append(abs_ratio_stats[1][1])
 ratiostats = pd.DataFrame(ratiostats)
-to_csv_pkl(ratiostats, rel_dir, 'webvslab_reliability_stats', rnd=2, _pkl=False)
+to_csv_pkl(ratiostats, sts_dir, 'blandaltman_stats', rnd=2, _pkl=False)
 
 # median abs ratio for each ori / task
 median_data = {'ori': [], 'task': [], 'median_abs_ratio': [], 'iqr': [], 'q1': [], 'q3': []}
-for i_ori in yydata_eachori[ori].unique():
-    for i_task in yydata_eachori[exp].unique():
-        i_data = index_dframe(yydata_eachori, [ori, exp], [i_ori, i_task])
+for i_ori in yy_data[ori].unique():
+    for i_task in yy_data[exp].unique():
+        i_data = index_dframe(yy_data, [ori, exp], [i_ori, i_task])
         median_data[ori].append(i_ori)
         median_data[exp].append(i_task)
         abs_ratio_stats = get_median_absolute_ratio(i_data, logdiff_label, f"{i_ori}_{i_task}")
@@ -674,14 +462,14 @@ for i_ori in yydata_eachori[ori].unique():
         median_data['q1'].append(abs_ratio_stats[1][0])
         median_data['q3'].append(abs_ratio_stats[1][1])
 median_data = pd.DataFrame(median_data)
-to_csv_pkl(median_data, rel_dir, 'ori_task_reliability', rnd=2, _pkl=False)
+to_csv_pkl(median_data, sts_dir, 'abs_median_ratio', rnd=2, _pkl=False)
 
 # check for violations of limits of agreement
 violations = {'id': [], 'violation': []}
-for i_p in yydata_eachori[p].unique():
-    for i_task in yydata_eachori[exp].unique():
-        for i_ori in yydata_eachori[ori].unique():
-            i_data = index_dframe(yydata_eachori, [p, exp, ori], [i_p, i_task, i_ori])
+for i_p in yy_data[p].unique():
+    for i_task in yy_data[exp].unique():
+        for i_ori in yy_data[ori].unique():
+            i_data = index_dframe(yy_data, [p, exp, ori], [i_p, i_task, i_ori])
             wvl_ratio = float(i_data[ratio_label])
             loa = list(ratiostats[(ratiostats[exp] == i_task)]['loa'])[0]
             if wvl_ratio < loa[0]:
@@ -692,27 +480,23 @@ for i_p in yydata_eachori[p].unique():
                 violations['id'].append(f"{i_p}_{i_task}_{i_ori}")
                 violations['violation'].append('upper')
                 # print(f"{i_p}_{i_task}_{i_ori} violates upper loa")
-to_csv_pkl(pd.DataFrame(violations), rel_dir, 'violations', _pkl=False)
-
-# all conditions together
-bland_altman(yydata_eachori, 'Web vs Lab', hue=ori, style=exp, labels=[diff_label, mean_label],
-             loglabels=[logdiff_label, logmean_label], ratiolabel=ratio_label,
-             save=True, show_ratio=True, show_log=True, show_linear=False, markerlist=['o', 'X'],
-             bias_adjust=False, checkifnormal=True, save_dir=rel_dir)
-get_median_absolute_ratio(yydata_eachori, logdiff_label, 'Web vs Lab')
+to_csv_pkl(pd.DataFrame(violations), sts_dir, 'blandaltman_loa_violations', _pkl=False)
 
 
 """
 Learning Effect
 """
-p_info = pd.read_csv('subsample_ids.csv')
+# # # check for whether participants improved between 1st and 2nd session # # #
+
+# label and which enviro first for subsample
+p_info = pd.read_csv(os.path.join(og_dir, 'subsample_ids.csv'))
 
 web_1st_id = list(p_info[p_info['first'] == 'web']['p_id'])
-web_1st_data = pd.concat([yydata_eachori[yydata_eachori[p] == i.lower()] for i in web_1st_id])
+web_1st_data = pd.concat([yy_data[yy_data[p] == i.lower()] for i in web_1st_id])
 web_1st_data = change_dframe_colnames(web_1st_data, ['web', 'lab'], ['1st', '2nd'])
 
 lab_1st_id = list(p_info[p_info['first'] == 'lab']['p_id'])
-lab_1st_data = pd.concat([yydata_eachori[yydata_eachori[p] == i.lower()] for i in lab_1st_id])
+lab_1st_data = pd.concat([yy_data[yy_data[p] == i.lower()] for i in lab_1st_id])
 lab_1st_data = change_dframe_colnames(lab_1st_data, ['web', 'lab'], ['2nd', '1st'])
 
 learning_data = pd.concat([web_1st_data, lab_1st_data])
@@ -733,7 +517,5 @@ learning_data[ratio_label] = np.asarray(learning_data['1st']) / np.asarray(learn
 learning = bland_altman(learning_data, '1st vs 2nd', hue=ori, labels=[diff_label, mean_label],
                         loglabels=[logdiff_label, logmean_label], ratiolabel=ratio_label,
                         save=True, show_ratio=True, show_log=True, show_linear=False, markerlist=None,
-                        bias_adjust=False, checkifnormal=True, save_dir=rel_dir)
-
-z = 0
+                        bias_adjust=False, checkifnormal=True, save_dir=gph_dir)
 print(learning)
