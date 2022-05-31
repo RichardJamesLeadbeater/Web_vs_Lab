@@ -392,7 +392,7 @@ for i_dir in [lab_dir, web_dir, raw_dir, sum_dir, sts_dir, rel_dir]:
         os.makedirs(i_dir)
 
 # use bootstrap data if it is available
-# summarydata = pd.read_csv(os.path.join(sum_dir, f"oriId_homevslab_bootstrap_allsummary.csv"))
+# summary_data = pd.read_csv(os.path.join(sum_dir, f"oriId_homevslab_bootstrap_allsummary.csv"))
 summarydata = pd.read_csv(os.path.join(sum_dir, f"oriId_homevslab_allsummary.csv"))
 
 env = 'enviro'
