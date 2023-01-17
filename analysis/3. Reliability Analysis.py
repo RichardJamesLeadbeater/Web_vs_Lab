@@ -274,7 +274,7 @@ sum_dir = os.path.join(data_dir, 'summary')
 rel_dir = os.path.join(og_dir, 'reliability_analyses')
 sub_dir = os.path.join(rel_dir, 'yy_data')
 gph_dir = os.path.join(rel_dir, 'graphs')
-sts_dir = os.path.join(rel_dir, 'stats')
+sts_dir = os.path.join(rel_dir, 'statistics')
 
 for i_dir in [sub_dir, sts_dir, gph_dir]:
     if not os.path.exists(i_dir):
@@ -291,6 +291,7 @@ mydpi = 100  # plot setting
 
 # load in summary data #
 summary_data = pd.read_csv(os.path.join(sum_dir, f"summary_data.csv"))
+summary_data = index_dframe(summary_data, ['ori'], ['horizontal', 'vertical', 'minus45', 'plus45'], 'or')  # only 4 oris
 
 """
 Intraclass Correlation
@@ -310,7 +311,9 @@ icc_data = pd.concat([i for i in icc_datalist])
 icc, _ = run_icc(icc_data, p, env, 'threshold', cond1=exp, cond2=ori, icctype='ICC2')
 to_csv_pkl(icc, sts_dir, f"icc_analysis_{icc['Type'].to_list()[0]}", rnd=3, _pkl=False)
 
-""" YY DATA """
+"""
+FORMAT YY DATA
+"""
 # manipulate data ready for correlation / yyplot / bland-altman analyses
 # set plotting preferences
 load_seaborn_prefs(context='talk')
@@ -382,13 +385,13 @@ color_palette = sns.color_palette('colorblind', 4)
 color_palette = [[0.2]*3, [0.8]*3, color_palette[2], color_palette[3]]
 manual_color = [i for i in color_palette]
 markersize = 150
-jitter_size = 1.03
+jitter = 1.02  # jitter shown values to limit overlapping datapoints
 figdims = (4, 4)
 for itask in ['spatial', 'temporal']:
     ifig, iax = plt.subplots(figsize=figdims)
     iplotdata = yy_data[yy_data[exp] == itask]
-    iplotdata['web'] = rand_jitter(iplotdata['web'], 1.03)
-    iplotdata['lab'] = rand_jitter(iplotdata['lab'], 1.02)
+    iplotdata['web'] = rand_jitter(iplotdata['web'], jitter)
+    iplotdata['lab'] = rand_jitter(iplotdata['lab'], jitter)
     corr_plot = sns.scatterplot(x='web', y='lab', data=iplotdata, hue=ori, ci=None, alpha=1,
                                 palette=color_palette, markers=['P', '^', 'd', 'X'], style='ori',
                                 s=markersize)

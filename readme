@@ -12,6 +12,17 @@ Contains code for the web and lab versions of the experiment, see readme files f
 
 # ANALYSIS #
 
-Contains raw_data
-Analysis code for calculating thresholds and summary statistics
-Analysis code for reliability measures (icc, yyplot, bland-altman)
+gen_summary.py
+    - input raw data
+    - thresholds calculated from curve fit to psychometric function
+    - output summary data
+
+reliability_analysis.py
+    - input raw data, summary data
+    - yyplot, icc, bland-altman
+
+
+# ANOVA #
+
+ANOVA and pairwise comparisons were performed in SPSS
+

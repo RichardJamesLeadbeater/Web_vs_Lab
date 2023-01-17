@@ -1,7 +1,0 @@
-id,violation
-p0_spatial_horizontal,lower
-p0_spatial_minus45,lower
-p2_temporal_vertical,lower
-p4_spatial_horizontal,lower
-p7_temporal_vertical,upper
-p7_temporal_plus45,lower

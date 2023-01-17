@@ -55,7 +55,9 @@ def paired_cohens_d(x, y):
 # init paths
 og_path = os.getcwd()
 sum_path = os.path.join(og_path, 'data', 'summary')
-sts_path = os.path.join(og_path, 'stats')
+stats_path = os.path.join(og_path, 'descriptive statistics')
+if not os.path.exists(stats_path):
+    os.makedirs(stats_path)
 
 # common keys as vars
 measure = 'threshold'
@@ -106,4 +108,4 @@ for isample in samples:
             full_range = np.percentile(idata['threshold'].to_numpy(), [0, 100])  # 90th percentile
             summary_stats['range'].append([np.round(r, 2) for r in full_range])
     summary_stats = pd.DataFrame(summary_stats)
-    to_csv_pkl(summary_stats, sts_path, f"{isample}_summarystats", _pkl=False)
+    to_csv_pkl(summary_stats, stats_path, f"{isample}_descriptive_stats", _pkl=False)

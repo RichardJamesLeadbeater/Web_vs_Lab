@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
-from mytools.dframe_tools import to_csv_pkl
+from mytools.dframe_tools import index_dframe, to_csv_pkl
 from mytools.dict_tools import append_dicty, init_cols
 from mytools.mocs import plot_psychometric, fit_logistic
 
@@ -25,6 +25,7 @@ for i_dir in [sum_dir]:
 
 # RAW DATA #
 raw_data = pd.read_csv(os.path.join(raw_dir, 'raw_data.csv'))
+raw_data = index_dframe(raw_data, ['ori'], ['horizontal', 'vertical', 'minus45', 'plus45'], 'or')  # only these oris
 
 # SUMMARY DATA #
 summary_data = init_cols([env, p, exp, ori, 'n_runs', 'threshold', 't_sem', 'slope', 's_sem'])
@@ -32,15 +33,9 @@ unique = {}
 for col in raw_data.columns:
     unique[col] = raw_data[col].unique()
 
-# exclusion based on not reaching 75 % correct on a single condition
-exclusion_list = ['p15', 'p17', 'p21', 'p22', 'p27', 'p33', 'p37',
-                  'p56', 'p57', 'p61', 'p71', 'p75']
-
 # calculate thresholds for each observer on each condition (fit curve to psychometric function)
 for i_env in unique[env]:
     for i_p in unique[p]:
-        if any(i_p == i for i in exclusion_list):  # skip if on exclusion list
-            continue
         for i_exp in unique[exp]:
             for i_ori in unique[ori]:
                 i_data = raw_data[(raw_data[ori] == i_ori) &
@@ -85,7 +80,6 @@ for i_env in unique[env]:
                 if print_fit:
                     plot_psychometric(x_data, y_data, datafit['x'], datafit['y'], datafit['threshold'],
                                       title=f"{i_p}\t{i_exp}\t{i_ori}", close_all=True, percent=True)
-                    z = 0
 
 summary_data = pd.DataFrame(summary_data)
 to_csv_pkl(summary_data, sum_dir, f"summary_data", rnd=4, _pkl=False)

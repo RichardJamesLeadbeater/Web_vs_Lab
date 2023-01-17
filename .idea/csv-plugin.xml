@@ -3,7 +3,21 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
+        <entry key="/analysis/data/raw/raw_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/analysis/data/subsample/subsample_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/analysis/data/subsample/subsample_ids.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -17,7 +31,56 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/analysis/reliability_analyses/stats/abs_median_ratio.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/analysis/reliability_analyses/stats/blandaltman_loa_violations.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/analysis/reliability_analyses/stats/blandaltman_stats.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/analysis/reliability_analyses/stats/icc_analysis_ICC2.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/analysis/reliability_analyses/yy_data/subsample_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/analysis/stats/allweb_descriptive_stats.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/analysis/stats/allweb_summarystats.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/analysis/stats/lab_descriptive_stats.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -31,7 +94,21 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/analysis/stats/web_descriptive_stats.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/analysis/stats/web_summarystats.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/analysis/subsample_ids.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
