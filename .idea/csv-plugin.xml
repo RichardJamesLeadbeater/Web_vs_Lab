@@ -31,6 +31,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/analysis/descriptive statistics/allweb_descriptive_stats.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/analysis/reliability_analyses/stats/abs_median_ratio.csv">
           <value>
             <Attribute>
