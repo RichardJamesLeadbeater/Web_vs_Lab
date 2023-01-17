@@ -1,1 +1,10 @@
 /venv/
+# ignore anything ending with this
+**/last_p.psydat
+# ignore file types too large for github
+*.png
+*.jpeg
+*.tiff
+*.zip
+# ignore nuisance filetypes
+*.DS_Store
